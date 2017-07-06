@@ -26,17 +26,31 @@ namespace TaskWebApp.Controllers
             {
                 // Retrieve the token with the specified scopes
                 var scope = new string[] { Startup.ReadTasksScope };
-                string signedInUserID = ClaimsPrincipal.Current.FindFirst(ClaimTypes.NameIdentifier).Value;
-                TokenCache userTokenCache = new MSALSessionCache(signedInUserID, this.HttpContext).GetMsalCacheInstance();
-                ConfidentialClientApplication cca = new ConfidentialClientApplication(Startup.ClientId, Startup.Authority, Startup.RedirectUri, new ClientCredential(Startup.ClientSecret), userTokenCache, null);
+                var signedInUserID = ClaimsPrincipal.Current.FindFirst(ClaimTypes.NameIdentifier).Value;
+                var sessionCache = new MSALSessionCache(signedInUserID, this.HttpContext);
+                var userTokenCache = sessionCache.GetMsalCacheInstance();
 
-                AuthenticationResult result = await cca.AcquireTokenSilentAsync(scope, cca.Users.FirstOrDefault(), Startup.Authority, false);
+                var clientId = Startup.ClientId;
+                var authority = Startup.Authority;
+                var redirectUri = Startup.RedirectUri;
+                var clientCred = new ClientCredential(Startup.ClientSecret);
+
+                var cca = new ConfidentialClientApplication(clientId, authority, redirectUri, clientCred, userTokenCache, null);
+
+                var user = cca.Users.FirstOrDefault();
+
+                if (user == null)
+                {
+                    throw new Exception("USER IS NULL From ConfidentialClientApplication");
+                }
+
+                var tokenAcquireResult = await cca.AcquireTokenSilentAsync(scope, user, authority, false);
 
                 HttpClient client = new HttpClient();
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, apiEndpoint);
 
                 // Add token to the Authorization header and make the request
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", result.AccessToken);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenAcquireResult.AccessToken);
                 HttpResponseMessage response = await client.SendAsync(request);
 
                 // Handle the response
