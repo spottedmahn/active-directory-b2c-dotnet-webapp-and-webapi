@@ -69,7 +69,9 @@ namespace TaskService.Controllers
         // Validate to ensure the necessary scopes are present.
         private void HasRequiredScopes(String permission)
         {
-            if (!ClaimsPrincipal.Current.FindFirst(scopeElement).Value.Contains(permission))
+            var allowed = ClaimsPrincipal.Current.FindFirst(scopeElement).Value.Contains(permission);
+
+            if (!allowed)
             {
                 throw new HttpResponseException(new HttpResponseMessage
                 {
