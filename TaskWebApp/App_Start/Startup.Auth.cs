@@ -70,6 +70,7 @@ namespace TaskWebApp
                         RedirectToIdentityProvider = OnRedirectToIdentityProvider,
                         AuthorizationCodeReceived = OnAuthorizationCodeReceived,
                         AuthenticationFailed = OnAuthenticationFailed,
+                        SecurityTokenValidated = OnSecurityTokenValidated
                     },
 
                     // Specify the claims to validate
@@ -79,9 +80,18 @@ namespace TaskWebApp
                     },
 
                     // Specify the scope by appending all of the scopes requested into one string (separated by a blank space)
-                    Scope = $"openid profile offline_access {ReadTasksScope} {WriteTasksScope}"
+                    Scope = $"openid profile offline_access {ReadTasksScope} {WriteTasksScope}",
+
+
                 }
             );
+        }
+
+        private Task OnSecurityTokenValidated(SecurityTokenValidatedNotification<OpenIdConnectMessage, OpenIdConnectAuthenticationOptions> arg)
+        {
+            var idToken = arg.ProtocolMessage.IdToken;
+            arg.AuthenticationTicket.Identity.AddClaim(new System.Security.Claims.Claim("idToken", idToken));
+            return Task.FromResult(0);
         }
 
         /*

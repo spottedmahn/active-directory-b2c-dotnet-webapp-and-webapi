@@ -22,6 +22,9 @@ namespace TaskWebApp.Controllers
         // GET: Makes a call to the API and retrieves the list of tasks
         public async Task<ActionResult> Index()
         {
+            var idToken = ClaimsPrincipal.Current.FindFirst("idToken");
+
+
             try
             {
                 // Retrieve the token with the specified scopes
@@ -89,7 +92,7 @@ namespace TaskWebApp.Controllers
                 }
 
                 // Set the content
-                var httpContent = new[] {new KeyValuePair<string, string>("Text", description)};
+                var httpContent = new[] { new KeyValuePair<string, string>("Text", description) };
 
                 // Create the request
                 HttpClient client = new HttpClient();
@@ -137,7 +140,7 @@ namespace TaskWebApp.Controllers
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Delete, apiEndpoint + id);
 
                 // Add token to the Authorization header and send the request
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", result.AccessToken); 
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", result.AccessToken);
                 HttpResponseMessage response = await client.SendAsync(request);
 
                 // Handle the response
